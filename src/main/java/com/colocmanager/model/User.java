@@ -29,6 +29,13 @@ public class User {
         this.email = email;
         this.password = password;
         this.role = role;
+        this.createdAt = LocalDateTime.now();
+        this.assignedTasks = new java.util.ArrayList<>();
+        this.createdTasks = new java.util.ArrayList<>();
+        this.notifications = new java.util.ArrayList<>();
+        this.reports = new java.util.ArrayList<>();
+        this.paidExpenses = new java.util.ArrayList<>();
+        this.expenseShares = new java.util.ArrayList<>();
     }
 
     public void addAssignedTask(Task task) {

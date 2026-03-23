@@ -15,7 +15,7 @@ public class Notification {
     private LocalDateTime createdAt;
     private User recipient;
 
-    // --- CONSTRUCTEUR ---
+
     public Notification(String title, String message, NotificationType type, User recipient) {
         this.id = UUID.randomUUID();
         this.title = title;
