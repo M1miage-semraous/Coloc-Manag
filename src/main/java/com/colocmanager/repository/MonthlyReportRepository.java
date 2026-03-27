@@ -9,7 +9,7 @@ import java.util.stream.Collectors;
 
 public class MonthlyReportRepository {
 
-    private List<MonthlyReport> reports = new ArrayList<>();
+    private final List<MonthlyReport> reports = new ArrayList<>();
 
     public void save(MonthlyReport report) {
         reports.add(report);

@@ -13,8 +13,8 @@ import java.util.UUID;
 
 public class ExpenseService {
 
-    private ExpenseRepository expenseRepository;
-    private ExpenseShareRepository expenseShareRepository;
+    private final ExpenseRepository expenseRepository;
+    private final ExpenseShareRepository expenseShareRepository;
 
     public ExpenseService(ExpenseRepository expenseRepository, ExpenseShareRepository expenseShareRepository) {
         this.expenseRepository = expenseRepository;

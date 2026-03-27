@@ -10,7 +10,7 @@ import java.util.UUID;
 
 public class NotificationService {
 
-    private NotificationRepository notificationRepository;
+    private final NotificationRepository notificationRepository;
 
     public NotificationService(NotificationRepository notificationRepository) {
         this.notificationRepository = notificationRepository;
@@ -26,16 +26,16 @@ public class NotificationService {
         return notificationRepository.findAll();
     }
 
-    public List<Notification> getNotificationsByUser(UUID userId) {
-        return notificationRepository.findByRecipient(userId);
+    public List<Notification> getNotificationsByUser(User user) {
+        return notificationRepository.findByRecipient(user);
     }
 
-    public List<Notification> getUnreadNotifications(UUID userId) {
-        return notificationRepository.findUnreadByRecipient(userId);
+    public List<Notification> getUnreadNotifications(User user) {
+        return notificationRepository.findUnreadByRecipient(user);
     }
 
-    public int countUnread(UUID userId) {
-        return notificationRepository.findUnreadByRecipient(userId).size();
+    public int countUnread(User user) {
+        return notificationRepository.findUnreadByRecipient(user).size();
     }
 
     public void markAsRead(UUID notificationId) {
@@ -45,8 +45,8 @@ public class NotificationService {
                 .ifPresent(Notification::markAsRead);
     }
 
-    public void markAllAsRead(UUID userId) {
-        notificationRepository.findUnreadByRecipient(userId)
+    public void markAllAsRead(User user) {
+        notificationRepository.findUnreadByRecipient(user)
                 .forEach(Notification::markAsRead);
     }
 

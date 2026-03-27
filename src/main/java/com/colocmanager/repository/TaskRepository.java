@@ -1,5 +1,6 @@
 package com.colocmanager.repository;
 
+import com.colocmanager.model.MonthlyReport;
 import com.colocmanager.model.Task;
 import com.colocmanager.model.User;
 
@@ -37,6 +38,13 @@ public class TaskRepository {
                 .collect(Collectors.toList());
     }
 
+    //changed
+    public List<Task> findByMonth(int month, int year) {
+        return tasks.stream()
+                .filter(r -> r.getMonth() == month
+                        && r.getYear() == year)
+                .collect(Collectors.toList());
+    }
     public List<Task> findByCreatedBy(User user) {
         return tasks.stream()
                 .filter(task -> task.getCreatedBy() != null

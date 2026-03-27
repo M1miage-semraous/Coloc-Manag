@@ -22,7 +22,12 @@ public class Task {
     private TaskStatus status;
     private LocalDateTime createdAt;
     private String description;
+    private int month;
+    private int year;
 
+    //changed
+    public int getMonth() { return month; }
+    public int getYear() { return year; }
 
     private User assignedUser;
     private User createdBy;

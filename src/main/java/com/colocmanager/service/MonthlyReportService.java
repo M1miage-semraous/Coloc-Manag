@@ -14,9 +14,9 @@ import java.util.UUID;
 
 public class MonthlyReportService {
 
-    private MonthlyReportRepository monthlyReportRepository;
-    private TaskRepository taskRepository;
-    private ExpenseRepository expenseRepository;
+    private final MonthlyReportRepository monthlyReportRepository;
+    private final TaskRepository taskRepository;
+    private final ExpenseRepository expenseRepository;
 
     public MonthlyReportService(MonthlyReportRepository monthlyReportRepository, TaskRepository taskRepository, ExpenseRepository expenseRepository) {
         this.monthlyReportRepository = monthlyReportRepository;
