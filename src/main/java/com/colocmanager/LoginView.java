@@ -1,6 +1,6 @@
 package com.colocmanager;
 
-import com.colocmanager.model.User;
+import com.colocmanager.controller.LoginController;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -9,11 +9,11 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
-import java.util.Optional;
-
 public class LoginView {
 
     public LoginView(Stage stage) {
+
+        LoginController controller = new LoginController();
 
         Label title = new Label("ColocManager - Connexion");
         title.setStyle("-fx-font-size: 22px; -fx-font-weight: bold;");
@@ -31,18 +31,17 @@ public class LoginView {
 
         Button loginButton = new Button("Se connecter");
         loginButton.setStyle("-fx-font-size: 14px; -fx-padding: 8 18;");
-        loginButton.setOnAction(e -> {
-            String email = emailField.getText().trim();
-            String password = passwordField.getText().trim();
+        loginButton.setOnAction(e -> controller.handleLogin(
+                emailField.getText().trim(),
+                passwordField.getText().trim(),
+                errorLabel
+        ));
 
-            Optional<User> user = MainApp.userService.login(email, password);
-
-            if (user.isPresent()) {
-                new DashboardView(stage, user.get());
-            } else {
-                errorLabel.setText("Email ou mot de passe incorrect");
-            }
-        });
+        passwordField.setOnAction(e -> controller.handleLogin(
+                emailField.getText().trim(),
+                passwordField.getText().trim(),
+                errorLabel
+        ));
 
         VBox form = new VBox(12, title, emailField, passwordField, loginButton, errorLabel);
         form.setAlignment(Pos.CENTER);

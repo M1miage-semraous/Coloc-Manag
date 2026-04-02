@@ -16,6 +16,9 @@ public class MainApp extends Application {
     @Override
     public void start(Stage primaryStage) {
 
+        DatabaseManager.getInstance();
+        SceneManager.init(primaryStage); // ← initialise le SceneManager
+
         UserRepository userRepo = new UserRepository();
         TaskRepository taskRepo = new TaskRepository();
         TaskValidationRepository valRepo = new TaskValidationRepository();
@@ -28,11 +31,17 @@ public class MainApp extends Application {
         expenseService = new ExpenseService(expenseRepo, shareRepo);
         notificationService = new NotificationService(notifRepo);
 
-        userService.createUser("Adnan", "adnane@gmail.com", "1234", Role.ADMIN);
-        userService.createUser("Alice", "alice@gmail.com", "1234", Role.USER);
-        userService.createUser("Bob", "bob@gmail.com", "1234", Role.USER);
+        if (userService.findByEmail("adnane@gmail.com").isEmpty()) {
+            userService.createUser("Adnan", "adnane@gmail.com", "1234", Role.ADMIN);
+        }
+        if (userService.findByEmail("alice@gmail.com").isEmpty()) {
+            userService.createUser("Alice", "alice@gmail.com", "1234", Role.USER);
+        }
+        if (userService.findByEmail("bob@gmail.com").isEmpty()) {
+            userService.createUser("Bob", "bob@gmail.com", "1234", Role.USER);
+        }
 
-        new LoginView(primaryStage);
+        SceneManager.showLogin(); // ← utilise le SceneManager pour afficher le login
     }
 
     public static void main(String[] args) {

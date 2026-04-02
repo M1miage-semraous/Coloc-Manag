@@ -1,61 +1,149 @@
 package com.colocmanager.repository;
 
-import com.colocmanager.model.MonthlyReport;
+import com.colocmanager.DatabaseManager;
+import com.colocmanager.enums.ImportanceLevel;
+import com.colocmanager.enums.PriorityLevel;
+import com.colocmanager.enums.TaskStatus;
 import com.colocmanager.model.Task;
 import com.colocmanager.model.User;
 
+import java.sql.*;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 public class TaskRepository {
 
-    private final List<Task> tasks = new ArrayList<>();
+    private final Connection connection;
+
+    public TaskRepository() {
+        this.connection = DatabaseManager.getInstance().getConnection();
+    }
 
     public void save(Task task) {
-        tasks.add(task);
+        String sql = """
+            INSERT OR REPLACE INTO tasks (id, title, description, status, priority,
+            importance, estimated_hours, deadline, created_at, creator_id, assigned_to_id)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """;
+        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
+            stmt.setString(1, task.getId().toString());
+            stmt.setString(2, task.getTitle());
+            stmt.setString(3, task.getDescription());
+            stmt.setString(4, task.getStatus().name());
+            stmt.setString(5, task.getCalculatedPriority().name());
+            stmt.setString(6, task.getImportance().name());
+            stmt.setInt(7, task.getEstimatedTimeHours());
+            stmt.setString(8, task.getDeadline() != null ? task.getDeadline().toString() : null);
+            stmt.setString(9, task.getCreatedAt().toString());
+            stmt.setString(10, task.getCreatedBy() != null ? task.getCreatedBy().getId().toString() : null);
+            stmt.setString(11, task.getAssignedUser() != null ? task.getAssignedUser().getId().toString() : null);
+            stmt.executeUpdate();
+        } catch (SQLException e) {
+            System.err.println("Erreur save task : " + e.getMessage());
+        }
     }
 
     public List<Task> findAll() {
-        return new ArrayList<>(tasks);
+        List<Task> tasks = new ArrayList<>();
+        String sql = "SELECT * FROM tasks";
+        try (Statement stmt = connection.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
+            while (rs.next()) {
+                tasks.add(mapResultSet(rs));
+            }
+        } catch (SQLException e) {
+            System.err.println("Erreur findAll tasks : " + e.getMessage());
+        }
+        return tasks;
     }
 
     public Optional<Task> findById(UUID id) {
-        return tasks.stream()
-                .filter(task -> task.getId() != null && task.getId().equals(id))
-                .findFirst();
+        String sql = "SELECT * FROM tasks WHERE id = ?";
+        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
+            stmt.setString(1, id.toString());
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) {
+                return Optional.of(mapResultSet(rs));
+            }
+        } catch (SQLException e) {
+            System.err.println("Erreur findById task : " + e.getMessage());
+        }
+        return Optional.empty();
     }
 
     public List<Task> findByAssignedUser(User user) {
-        return tasks.stream()
-                .filter(task -> task.getAssignedUser() != null
-                        && task.getAssignedUser().getId() != null
-                        && user != null
-                        && user.getId() != null
-                        && task.getAssignedUser().getId().equals(user.getId()))
-                .collect(Collectors.toList());
+        List<Task> tasks = new ArrayList<>();
+        if (user == null || user.getId() == null) return tasks;
+        String sql = "SELECT * FROM tasks WHERE assigned_to_id = ?";
+        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
+            stmt.setString(1, user.getId().toString());
+            ResultSet rs = stmt.executeQuery();
+            while (rs.next()) {
+                tasks.add(mapResultSet(rs));
+            }
+        } catch (SQLException e) {
+            System.err.println("Erreur findByAssignedUser : " + e.getMessage());
+        }
+        return tasks;
     }
 
-    //changed
-    public List<Task> findByMonth(int month, int year) {
-        return tasks.stream()
-                .filter(r -> r.getMonth() == month
-                        && r.getYear() == year)
-                .collect(Collectors.toList());
-    }
     public List<Task> findByCreatedBy(User user) {
-        return tasks.stream()
-                .filter(task -> task.getCreatedBy() != null
-                        && task.getCreatedBy().getId() != null
-                        && user != null
-                        && user.getId() != null
-                        && task.getCreatedBy().getId().equals(user.getId()))
-                .collect(Collectors.toList());
+        List<Task> tasks = new ArrayList<>();
+        if (user == null || user.getId() == null) return tasks;
+        String sql = "SELECT * FROM tasks WHERE creator_id = ?";
+        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
+            stmt.setString(1, user.getId().toString());
+            ResultSet rs = stmt.executeQuery();
+            while (rs.next()) {
+                tasks.add(mapResultSet(rs));
+            }
+        } catch (SQLException e) {
+            System.err.println("Erreur findByCreatedBy : " + e.getMessage());
+        }
+        return tasks;
+    }
+
+    public List<Task> findByMonth(int month, int year) {
+        List<Task> tasks = new ArrayList<>();
+        String sql = "SELECT * FROM tasks WHERE strftime('%m', created_at) = ? AND strftime('%Y', created_at) = ?";
+        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
+            stmt.setString(1, String.format("%02d", month));
+            stmt.setString(2, String.valueOf(year));
+            ResultSet rs = stmt.executeQuery();
+            while (rs.next()) {
+                tasks.add(mapResultSet(rs));
+            }
+        } catch (SQLException e) {
+            System.err.println("Erreur findByMonth : " + e.getMessage());
+        }
+        return tasks;
     }
 
     public void delete(UUID id) {
-        tasks.removeIf(task -> task.getId() != null && task.getId().equals(id));
+        String sql = "DELETE FROM tasks WHERE id = ?";
+        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
+            stmt.setString(1, id.toString());
+            stmt.executeUpdate();
+        } catch (SQLException e) {
+            System.err.println("Erreur delete task : " + e.getMessage());
+        }
+    }
+
+    private Task mapResultSet(ResultSet rs) throws SQLException {
+        Task task = new Task(
+                rs.getString("title"),
+                rs.getString("description"),
+                rs.getString("deadline") != null ? LocalDate.parse(rs.getString("deadline")) : null,
+                ImportanceLevel.valueOf(rs.getString("importance")),
+                rs.getInt("estimated_hours"),
+                null, // assignedUser — chargé séparément via UserRepository si besoin
+                null  // createdBy — chargé séparément via UserRepository si besoin
+        );
+        task.setStatus(TaskStatus.valueOf(rs.getString("status")));
+        return task;
     }
 }

@@ -26,7 +26,7 @@ public class ExpenseService {
         expense.splitAmount(participants);
         expenseRepository.save(expense);
         for (ExpenseShare share : expense.getShares()) {
-            expenseShareRepository.save(share);
+            expenseShareRepository.save(share, expense.getId()); // ← correction ici
         }
         return expense;
     }
@@ -52,6 +52,7 @@ public class ExpenseService {
     }
 
     public void deleteExpense(UUID id) {
+        expenseShareRepository.deleteByExpenseId(id); // supprime les parts d'abord
         expenseRepository.delete(id);
     }
 }

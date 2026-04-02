@@ -3,6 +3,7 @@ package com.colocmanager.service;
 import com.colocmanager.enums.Role;
 import com.colocmanager.model.User;
 import com.colocmanager.repository.UserRepository;
+import org.mindrot.jbcrypt.BCrypt;
 
 import java.util.List;
 import java.util.Optional;
@@ -23,7 +24,10 @@ public class UserService {
             throw new IllegalArgumentException("Un utilisateur avec cet email existe déjà.");
         }
 
-        User user = new User(fullName, email, password, role);
+        // Hash du mot de passe avant sauvegarde
+        String hashedPassword = BCrypt.hashpw(password, BCrypt.gensalt());
+
+        User user = new User(fullName, email, hashedPassword, role);
         userRepository.save(user);
         return user;
     }
@@ -62,7 +66,6 @@ public class UserService {
 
         if (email != null && !email.equalsIgnoreCase(user.getEmail())) {
             Optional<User> existingUser = userRepository.findByEmail(email);
-
             if (existingUser.isPresent() && !existingUser.get().getId().equals(userId)) {
                 throw new IllegalArgumentException("Un autre utilisateur utilise déjà cet email.");
             }
@@ -77,13 +80,15 @@ public class UserService {
         }
 
         if (password != null && !password.isBlank()) {
-            user.setPassword(password);
+            // Hash du nouveau mot de passe
+            user.setPassword(BCrypt.hashpw(password, BCrypt.gensalt()));
         }
 
         if (role != null) {
             user.setRole(role);
         }
 
+        userRepository.save(user);
         return true;
     }
 
@@ -92,8 +97,8 @@ public class UserService {
 
         if (optionalUser.isPresent()) {
             User user = optionalUser.get();
-
-            if (user.getPassword().equals(password)) {
+            // Vérification BCrypt au lieu de comparaison en clair
+            if (BCrypt.checkpw(password, user.getPassword())) {
                 return Optional.of(user);
             }
         }
