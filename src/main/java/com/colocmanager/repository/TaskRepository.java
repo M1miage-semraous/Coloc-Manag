@@ -2,14 +2,12 @@ package com.colocmanager.repository;
 
 import com.colocmanager.DatabaseManager;
 import com.colocmanager.enums.ImportanceLevel;
-import com.colocmanager.enums.PriorityLevel;
 import com.colocmanager.enums.TaskStatus;
 import com.colocmanager.model.Task;
 import com.colocmanager.model.User;
 
 import java.sql.*;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -134,16 +132,50 @@ public class TaskRepository {
     }
 
     private Task mapResultSet(ResultSet rs) throws SQLException {
+        User assignedUser = null;
+        String assignedId = rs.getString("assigned_to_id");
+        if (assignedId != null) {
+            assignedUser = loadUserById(assignedId);
+        }
+
+        User createdBy = null;
+        String creatorId = rs.getString("creator_id");
+        if (creatorId != null) {
+            createdBy = loadUserById(creatorId);
+        }
+
         Task task = new Task(
                 rs.getString("title"),
                 rs.getString("description"),
                 rs.getString("deadline") != null ? LocalDate.parse(rs.getString("deadline")) : null,
                 ImportanceLevel.valueOf(rs.getString("importance")),
                 rs.getInt("estimated_hours"),
-                null, // assignedUser — chargé séparément via UserRepository si besoin
-                null  // createdBy — chargé séparément via UserRepository si besoin
+                assignedUser,
+                createdBy
         );
         task.setStatus(TaskStatus.valueOf(rs.getString("status")));
+        task.setId(UUID.fromString(rs.getString("id")));
         return task;
+    }
+
+    private User loadUserById(String id) {
+        String sql = "SELECT * FROM users WHERE id = ?";
+        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
+            stmt.setString(1, id);
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) {
+                User user = new User(
+                        rs.getString("full_name"),
+                        rs.getString("email"),
+                        rs.getString("password"),
+                        com.colocmanager.enums.Role.valueOf(rs.getString("role"))
+                );
+                user.setId(UUID.fromString(rs.getString("id")));
+                return user;
+            }
+        } catch (SQLException e) {
+            System.err.println("Erreur loadUserById : " + e.getMessage());
+        }
+        return null;
     }
 }

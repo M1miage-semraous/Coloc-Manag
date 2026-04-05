@@ -16,17 +16,23 @@ public class ExpenseService {
     private final ExpenseRepository expenseRepository;
     private final ExpenseShareRepository expenseShareRepository;
 
-    public ExpenseService(ExpenseRepository expenseRepository, ExpenseShareRepository expenseShareRepository) {
+    public ExpenseService(ExpenseRepository expenseRepository,
+                          ExpenseShareRepository expenseShareRepository) {
         this.expenseRepository = expenseRepository;
         this.expenseShareRepository = expenseShareRepository;
     }
 
-    public Expense createExpense(String label, Double amount, String description, LocalDate expenseDate, User paidBy, List<User> participants) {
+    public ExpenseRepository getExpenseRepository() {
+        return expenseRepository;
+    }
+
+    public Expense createExpense(String label, Double amount, String description,
+                                 LocalDate expenseDate, User paidBy, List<User> participants) {
         Expense expense = new Expense(label, amount, description, expenseDate, paidBy);
         expense.splitAmount(participants);
         expenseRepository.save(expense);
         for (ExpenseShare share : expense.getShares()) {
-            expenseShareRepository.save(share, expense.getId()); // ← correction ici
+            expenseShareRepository.save(share, expense.getId());
         }
         return expense;
     }
@@ -52,7 +58,15 @@ public class ExpenseService {
     }
 
     public void deleteExpense(UUID id) {
-        expenseShareRepository.deleteByExpenseId(id); // supprime les parts d'abord
+        expenseShareRepository.deleteByExpenseId(id);
         expenseRepository.delete(id);
+    }
+
+    public void markShareAsPaid(UUID shareId) {
+        expenseShareRepository.markAsPaid(shareId);
+    }
+
+    public List<ExpenseShare> getSharesForUser(UUID userId) {
+        return expenseShareRepository.findByUserId(userId);
     }
 }

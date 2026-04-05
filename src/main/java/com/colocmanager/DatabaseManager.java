@@ -1,4 +1,3 @@
-
 package com.colocmanager;
 
 import java.sql.Connection;
@@ -36,7 +35,6 @@ public class DatabaseManager {
     private void initTables() throws SQLException {
         Statement stmt = connection.createStatement();
 
-        // Table users
         stmt.execute("""
             CREATE TABLE IF NOT EXISTS users (
                 id TEXT PRIMARY KEY,
@@ -48,7 +46,6 @@ public class DatabaseManager {
             )
         """);
 
-        // Table tasks
         stmt.execute("""
             CREATE TABLE IF NOT EXISTS tasks (
                 id TEXT PRIMARY KEY,
@@ -65,10 +62,10 @@ public class DatabaseManager {
             )
         """);
 
-        // Table notifications
         stmt.execute("""
             CREATE TABLE IF NOT EXISTS notifications (
                 id TEXT PRIMARY KEY,
+                title TEXT NOT NULL,
                 message TEXT NOT NULL,
                 type TEXT NOT NULL,
                 is_read INTEGER NOT NULL DEFAULT 0,
@@ -77,7 +74,6 @@ public class DatabaseManager {
             )
         """);
 
-        // Table expenses
         stmt.execute("""
             CREATE TABLE IF NOT EXISTS expenses (
                 id TEXT PRIMARY KEY,
@@ -88,7 +84,6 @@ public class DatabaseManager {
             )
         """);
 
-        // Table expense_shares
         stmt.execute("""
             CREATE TABLE IF NOT EXISTS expense_shares (
                 id TEXT PRIMARY KEY,
@@ -99,7 +94,6 @@ public class DatabaseManager {
             )
         """);
 
-        // Table task_validations
         stmt.execute("""
             CREATE TABLE IF NOT EXISTS task_validations (
                 id TEXT PRIMARY KEY,

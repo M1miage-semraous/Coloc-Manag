@@ -25,7 +25,6 @@ public class Task {
     private int month;
     private int year;
 
-    //changed
     public int getMonth() { return month; }
     public int getYear() { return year; }
 
@@ -49,24 +48,18 @@ public class Task {
         this.assignedUser = assignedUser;
         this.createdBy = createdBy;
         this.calculatedPriority = calculatePriority();
-
     }
 
     public PriorityLevel calculatePriority() {
-
         if (importance == ImportanceLevel.HIGH && estimatedTimeHours >= 4) {
             this.calculatedPriority = PriorityLevel.URGENT;
-
         } else if (importance == ImportanceLevel.HIGH) {
             this.calculatedPriority = PriorityLevel.HIGH;
-
         } else if (importance == ImportanceLevel.MEDIUM) {
             this.calculatedPriority = PriorityLevel.MEDIUM;
-
         } else {
             this.calculatedPriority = PriorityLevel.LOW;
         }
-
         return this.calculatedPriority;
     }
 
@@ -92,105 +85,40 @@ public class Task {
         this.relatedExpenses.add(expense);
     }
 
-    public UUID getId() {
-        return id;
-    }
+    public UUID getId() { return id; }
 
-    public String getTitle() {
-        return title;
-    }
+    public void setId(UUID id) { this.id = id; }
 
-    public void setTitle(String title) {
-        this.title = title;
-    }
+    public String getTitle() { return title; }
+    public void setTitle(String title) { this.title = title; }
 
-    public String getDescription() {
-        return description;
-    }
+    public String getDescription() { return description; }
+    public void setDescription(String description) { this.description = description; }
 
-    public void setDescription(String description) {
-        this.description = description;
-    }
+    public LocalDate getDeadline() { return deadline; }
+    public void setDeadline(LocalDate deadline) { this.deadline = deadline; }
 
-    public LocalDate getDeadline() {
-        return deadline;
-    }
+    public ImportanceLevel getImportance() { return importance; }
+    public void setImportance(ImportanceLevel importance) { this.importance = importance; }
 
-    public void setDeadline(LocalDate deadline) {
-        this.deadline = deadline;
-    }
+    public Integer getEstimatedTimeHours() { return estimatedTimeHours; }
+    public void setEstimatedTimeHours(Integer estimatedTimeHours) { this.estimatedTimeHours = estimatedTimeHours; }
 
-    public ImportanceLevel getImportance() {
-        return importance;
-    }
+    public PriorityLevel getCalculatedPriority() { return calculatedPriority; }
 
-    public void setImportance(ImportanceLevel importance) {
-        this.importance = importance;
-    }
+    public TaskStatus getStatus() { return status; }
+    public void setStatus(TaskStatus status) { this.status = status; }
 
-    public Integer getEstimatedTimeHours() {
-        return estimatedTimeHours;
-    }
+    public LocalDateTime getCreatedAt() { return createdAt; }
 
-    public void setEstimatedTimeHours(Integer estimatedTimeHours) {
-        this.estimatedTimeHours = estimatedTimeHours;
-    }
+    public User getAssignedUser() { return assignedUser; }
+    public void setAssignedUser(User assignedUser) { this.assignedUser = assignedUser; }
 
-    public PriorityLevel getCalculatedPriority() {
-        return calculatedPriority;
-    }
+    public User getCreatedBy() { return createdBy; }
+    public void setCreatedBy(User createdBy) { this.createdBy = createdBy; }
 
-    public TaskStatus getStatus() {
-        return status;
-    }
+    public List<Expense> getRelatedExpenses() { return relatedExpenses; }
 
-    public void setStatus(TaskStatus status) {
-        this.status = status;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public User getAssignedUser() {
-        return assignedUser;
-    }
-
-    public void setAssignedUser(User assignedUser) {
-        this.assignedUser = assignedUser;
-    }
-
-    public User getCreatedBy() {
-        return createdBy;
-    }
-
-    public void setCreatedBy(User createdBy) {
-        this.createdBy = createdBy;
-    }
-
-    public List<Expense> getRelatedExpenses() {
-        return relatedExpenses;
-    }
-
-    public TaskValidation getValidation() {
-        return validation;
-    }
-
-    public void setValidation(TaskValidation validation) {
-        this.validation = validation;
-    }
-
-
+    public TaskValidation getValidation() { return validation; }
+    public void setValidation(TaskValidation validation) { this.validation = validation; }
 }
-
-
-
-
-
-
-
-
-
-
-
-

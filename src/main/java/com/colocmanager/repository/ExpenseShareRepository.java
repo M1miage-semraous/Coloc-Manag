@@ -2,6 +2,7 @@ package com.colocmanager.repository;
 
 import com.colocmanager.DatabaseManager;
 import com.colocmanager.model.ExpenseShare;
+import com.colocmanager.model.User;
 
 import java.sql.*;
 import java.util.ArrayList;
@@ -27,10 +28,20 @@ public class ExpenseShareRepository {
             stmt.setString(2, expenseId.toString());
             stmt.setString(3, expenseShare.getUser().getId().toString());
             stmt.setDouble(4, expenseShare.getAmountDue());
-            stmt.setInt(5, 0);
+            stmt.setInt(5, expenseShare.isPaid() ? 1 : 0);
             stmt.executeUpdate();
         } catch (SQLException e) {
             System.err.println("Erreur save expenseShare : " + e.getMessage());
+        }
+    }
+
+    public void markAsPaid(UUID shareId) {
+        String sql = "UPDATE expense_shares SET is_paid = 1 WHERE id = ?";
+        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
+            stmt.setString(1, shareId.toString());
+            stmt.executeUpdate();
+        } catch (SQLException e) {
+            System.err.println("Erreur markAsPaid : " + e.getMessage());
         }
     }
 
@@ -93,7 +104,7 @@ public class ExpenseShareRepository {
     }
 
     public double getTotalDueByUser(UUID userId) {
-        String sql = "SELECT SUM(amount) FROM expense_shares WHERE user_id = ?";
+        String sql = "SELECT SUM(amount) FROM expense_shares WHERE user_id = ? AND is_paid = 0";
         try (PreparedStatement stmt = connection.prepareStatement(sql)) {
             stmt.setString(1, userId.toString());
             ResultSet rs = stmt.executeQuery();
@@ -136,7 +147,36 @@ public class ExpenseShareRepository {
     }
 
     private ExpenseShare mapResultSet(ResultSet rs) throws SQLException {
-        // user chargé à null — à résoudre via UserRepository si besoin
-        return new ExpenseShare(null, rs.getDouble("amount"));
+        String userId  = rs.getString("user_id");
+        double amount  = rs.getDouble("amount");
+        boolean isPaid = rs.getInt("is_paid") == 1;
+        String shareId = rs.getString("id");
+
+        User user = loadUserById(userId);
+        ExpenseShare share = new ExpenseShare(user, amount);
+        share.setId(UUID.fromString(shareId));
+        share.setPaid(isPaid);
+        return share;
+    }
+
+    private User loadUserById(String id) {
+        String sql = "SELECT * FROM users WHERE id = ?";
+        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
+            stmt.setString(1, id);
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) {
+                User user = new User(
+                        rs.getString("full_name"),
+                        rs.getString("email"),
+                        rs.getString("password"),
+                        com.colocmanager.enums.Role.valueOf(rs.getString("role"))
+                );
+                user.setId(UUID.fromString(rs.getString("id")));
+                return user;
+            }
+        } catch (SQLException e) {
+            System.err.println("Erreur loadUserById share : " + e.getMessage());
+        }
+        return null;
     }
 }
