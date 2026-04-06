@@ -21,6 +21,10 @@ public class TaskRepository {
         this.connection = DatabaseManager.getInstance().getConnection();
     }
 
+    public TaskRepository(Connection connection) {
+        this.connection = connection;
+    }
+
     public void save(Task task) {
         String sql = """
             INSERT OR REPLACE INTO tasks (id, title, description, status, priority,
@@ -134,15 +138,11 @@ public class TaskRepository {
     private Task mapResultSet(ResultSet rs) throws SQLException {
         User assignedUser = null;
         String assignedId = rs.getString("assigned_to_id");
-        if (assignedId != null) {
-            assignedUser = loadUserById(assignedId);
-        }
+        if (assignedId != null) assignedUser = loadUserById(assignedId);
 
         User createdBy = null;
         String creatorId = rs.getString("creator_id");
-        if (creatorId != null) {
-            createdBy = loadUserById(creatorId);
-        }
+        if (creatorId != null) createdBy = loadUserById(creatorId);
 
         Task task = new Task(
                 rs.getString("title"),
@@ -174,7 +174,7 @@ public class TaskRepository {
                 return user;
             }
         } catch (SQLException e) {
-            System.err.println("Erreur loadUserById : " + e.getMessage());
+            System.err.println("Erreur loadUserById task : " + e.getMessage());
         }
         return null;
     }

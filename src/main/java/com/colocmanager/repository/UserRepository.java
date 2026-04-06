@@ -5,7 +5,6 @@ import com.colocmanager.enums.Role;
 import com.colocmanager.model.User;
 
 import java.sql.*;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -17,6 +16,10 @@ public class UserRepository {
 
     public UserRepository() {
         this.connection = DatabaseManager.getInstance().getConnection();
+    }
+
+    public UserRepository(Connection connection) {
+        this.connection = connection;
     }
 
     public void save(User user) {

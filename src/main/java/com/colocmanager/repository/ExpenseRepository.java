@@ -20,6 +20,10 @@ public class ExpenseRepository {
         this.connection = DatabaseManager.getInstance().getConnection();
     }
 
+    public ExpenseRepository(Connection connection) {
+        this.connection = connection;
+    }
+
     public void save(Expense expense) {
         String sql = """
             INSERT OR REPLACE INTO expenses (id, description, amount, date, paid_by_id)
@@ -132,7 +136,6 @@ public class ExpenseRepository {
 
         List<ExpenseShare> shares = loadSharesForExpense(expenseId);
         expense.setShares(shares);
-
         return expense;
     }
 
@@ -147,7 +150,6 @@ public class ExpenseRepository {
                 double amount  = rs.getDouble("amount");
                 boolean isPaid = rs.getInt("is_paid") == 1;
                 String shareId = rs.getString("id");
-
                 User user = loadUserById(userId);
                 if (user != null) {
                     ExpenseShare share = new ExpenseShare(user, amount);

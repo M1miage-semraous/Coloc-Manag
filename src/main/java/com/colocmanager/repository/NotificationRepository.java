@@ -19,6 +19,10 @@ public class NotificationRepository {
         this.connection = DatabaseManager.getInstance().getConnection();
     }
 
+    public NotificationRepository(Connection connection) {
+        this.connection = connection;
+    }
+
     public void save(Notification notification) {
         String sql = """
             INSERT OR REPLACE INTO notifications (id, title, message, type, is_read, created_at, user_id)
@@ -35,6 +39,16 @@ public class NotificationRepository {
             stmt.executeUpdate();
         } catch (SQLException e) {
             System.err.println("Erreur save notification : " + e.getMessage());
+        }
+    }
+
+    public void markAsRead(UUID id) {
+        String sql = "UPDATE notifications SET is_read = 1 WHERE id = ?";
+        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
+            stmt.setString(1, id.toString());
+            stmt.executeUpdate();
+        } catch (SQLException e) {
+            System.err.println("Erreur markAsRead notification : " + e.getMessage());
         }
     }
 
@@ -89,7 +103,6 @@ public class NotificationRepository {
     public List<Notification> findByRecipient(User user) {
         List<Notification> notifications = new ArrayList<>();
         if (user == null || user.getId() == null) return notifications;
-
         String sql = "SELECT * FROM notifications WHERE user_id = ?";
         try (PreparedStatement stmt = connection.prepareStatement(sql)) {
             stmt.setString(1, user.getId().toString());
@@ -116,7 +129,6 @@ public class NotificationRepository {
     public List<Notification> findUnreadByRecipient(User user) {
         List<Notification> notifications = new ArrayList<>();
         if (user == null || user.getId() == null) return notifications;
-
         String sql = "SELECT * FROM notifications WHERE user_id = ? AND is_read = 0";
         try (PreparedStatement stmt = connection.prepareStatement(sql)) {
             stmt.setString(1, user.getId().toString());

@@ -18,6 +18,10 @@ public class ExpenseShareRepository {
         this.connection = DatabaseManager.getInstance().getConnection();
     }
 
+    public ExpenseShareRepository(Connection connection) {
+        this.connection = connection;
+    }
+
     public void save(ExpenseShare expenseShare, UUID expenseId) {
         String sql = """
             INSERT OR REPLACE INTO expense_shares (id, expense_id, user_id, amount, is_paid)
@@ -151,7 +155,6 @@ public class ExpenseShareRepository {
         double amount  = rs.getDouble("amount");
         boolean isPaid = rs.getInt("is_paid") == 1;
         String shareId = rs.getString("id");
-
         User user = loadUserById(userId);
         ExpenseShare share = new ExpenseShare(user, amount);
         share.setId(UUID.fromString(shareId));

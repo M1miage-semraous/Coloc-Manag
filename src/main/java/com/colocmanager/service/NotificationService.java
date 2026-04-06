@@ -39,15 +39,14 @@ public class NotificationService {
     }
 
     public void markAsRead(UUID notificationId) {
-        notificationRepository.findAll().stream()
-                .filter(n -> n.getId().equals(notificationId))
-                .findFirst()
-                .ifPresent(Notification::markAsRead);
+        notificationRepository.markAsRead(notificationId);
     }
 
     public void markAllAsRead(User user) {
-        notificationRepository.findUnreadByRecipient(user)
-                .forEach(Notification::markAsRead);
+        List<Notification> unread = notificationRepository.findUnreadByRecipient(user);
+        for (Notification n : unread) {
+            notificationRepository.markAsRead(n.getId());
+        }
     }
 
     public void deleteNotification(UUID id) {

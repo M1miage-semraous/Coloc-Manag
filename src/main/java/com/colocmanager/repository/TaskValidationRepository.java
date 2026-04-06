@@ -18,10 +18,12 @@ public class TaskValidationRepository {
         this.connection = DatabaseManager.getInstance().getConnection();
     }
 
+    public TaskValidationRepository(Connection connection) {
+        this.connection = connection;
+    }
+
     public void save(TaskValidation validation) {
-        if (validation == null || validation.getTask() == null || validation.getTask().getId() == null) {
-            return;
-        }
+        if (validation == null || validation.getTask() == null || validation.getTask().getId() == null) return;
 
         String sql = """
             INSERT OR REPLACE INTO task_validations (id, task_id, validator_id, decision, comment, validated_at)
@@ -59,9 +61,7 @@ public class TaskValidationRepository {
         try (PreparedStatement stmt = connection.prepareStatement(sql)) {
             stmt.setString(1, id.toString());
             ResultSet rs = stmt.executeQuery();
-            if (rs.next()) {
-                return Optional.of(mapResultSet(rs));
-            }
+            if (rs.next()) return Optional.of(mapResultSet(rs));
         } catch (SQLException e) {
             System.err.println("Erreur findById taskValidation : " + e.getMessage());
         }
@@ -73,9 +73,7 @@ public class TaskValidationRepository {
         try (PreparedStatement stmt = connection.prepareStatement(sql)) {
             stmt.setString(1, taskId.toString());
             ResultSet rs = stmt.executeQuery();
-            if (rs.next()) {
-                return Optional.of(mapResultSet(rs));
-            }
+            if (rs.next()) return Optional.of(mapResultSet(rs));
         } catch (SQLException e) {
             System.err.println("Erreur findByTaskId : " + e.getMessage());
         }
@@ -111,7 +109,6 @@ public class TaskValidationRepository {
         TaskValidation validation = new TaskValidation();
         validation.setDecision(ValidationDecision.valueOf(rs.getString("decision")));
         validation.setComment(rs.getString("comment"));
-        // task et validator chargés à null — à résoudre via leurs repositories si besoin
         return validation;
     }
 }
