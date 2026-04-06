@@ -58,17 +58,8 @@ public class NotificationRepository {
         try (Statement stmt = connection.createStatement();
              ResultSet rs = stmt.executeQuery(sql)) {
             while (rs.next()) {
-                String title   = rs.getString("title");
-                String message = rs.getString("message");
-                String type    = rs.getString("type");
-                int isRead     = rs.getInt("is_read");
-                String userId  = rs.getString("user_id");
-                User recipient = loadUserById(userId);
-                if (recipient != null) {
-                    Notification n = new Notification(title, message, NotificationType.valueOf(type), recipient);
-                    if (isRead == 1) n.markAsRead();
-                    notifications.add(n);
-                }
+                Notification n = mapResultSet(rs);
+                if (n != null) notifications.add(n);
             }
         } catch (SQLException e) {
             System.err.println("Erreur findAll notifications : " + e.getMessage());
@@ -82,17 +73,8 @@ public class NotificationRepository {
             stmt.setString(1, id.toString());
             ResultSet rs = stmt.executeQuery();
             if (rs.next()) {
-                String title   = rs.getString("title");
-                String message = rs.getString("message");
-                String type    = rs.getString("type");
-                int isRead     = rs.getInt("is_read");
-                String userId  = rs.getString("user_id");
-                User recipient = loadUserById(userId);
-                if (recipient != null) {
-                    Notification n = new Notification(title, message, NotificationType.valueOf(type), recipient);
-                    if (isRead == 1) n.markAsRead();
-                    return Optional.of(n);
-                }
+                Notification n = mapResultSet(rs);
+                if (n != null) return Optional.of(n);
             }
         } catch (SQLException e) {
             System.err.println("Erreur findById notification : " + e.getMessage());
@@ -108,17 +90,8 @@ public class NotificationRepository {
             stmt.setString(1, user.getId().toString());
             ResultSet rs = stmt.executeQuery();
             while (rs.next()) {
-                String title   = rs.getString("title");
-                String message = rs.getString("message");
-                String type    = rs.getString("type");
-                int isRead     = rs.getInt("is_read");
-                String userId  = rs.getString("user_id");
-                User recipient = loadUserById(userId);
-                if (recipient != null) {
-                    Notification n = new Notification(title, message, NotificationType.valueOf(type), recipient);
-                    if (isRead == 1) n.markAsRead();
-                    notifications.add(n);
-                }
+                Notification n = mapResultSet(rs);
+                if (n != null) notifications.add(n);
             }
         } catch (SQLException e) {
             System.err.println("Erreur findByRecipient : " + e.getMessage());
@@ -134,15 +107,8 @@ public class NotificationRepository {
             stmt.setString(1, user.getId().toString());
             ResultSet rs = stmt.executeQuery();
             while (rs.next()) {
-                String title   = rs.getString("title");
-                String message = rs.getString("message");
-                String type    = rs.getString("type");
-                String userId  = rs.getString("user_id");
-                User recipient = loadUserById(userId);
-                if (recipient != null) {
-                    Notification n = new Notification(title, message, NotificationType.valueOf(type), recipient);
-                    notifications.add(n);
-                }
+                Notification n = mapResultSet(rs);
+                if (n != null) notifications.add(n);
             }
         } catch (SQLException e) {
             System.err.println("Erreur findUnreadByRecipient : " + e.getMessage());
@@ -158,6 +124,23 @@ public class NotificationRepository {
         } catch (SQLException e) {
             System.err.println("Erreur delete notification : " + e.getMessage());
         }
+    }
+
+    private Notification mapResultSet(ResultSet rs) throws SQLException {
+        String id      = rs.getString("id");
+        String title   = rs.getString("title");
+        String message = rs.getString("message");
+        String type    = rs.getString("type");
+        int isRead     = rs.getInt("is_read");
+        String userId  = rs.getString("user_id");
+
+        User recipient = loadUserById(userId);
+        if (recipient == null) return null;
+
+        Notification n = new Notification(title, message, NotificationType.valueOf(type), recipient);
+        n.setId(UUID.fromString(id));
+        if (isRead == 1) n.markAsRead();
+        return n;
     }
 
     private User loadUserById(String id) {

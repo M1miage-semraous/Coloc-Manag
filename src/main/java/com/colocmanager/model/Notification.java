@@ -6,7 +6,6 @@ import java.util.UUID;
 
 public class Notification {
 
-
     private UUID id;
     private String title;
     private String message;
@@ -14,7 +13,6 @@ public class Notification {
     private boolean isRead;
     private LocalDateTime createdAt;
     private User recipient;
-
 
     public Notification(String title, String message, NotificationType type, User recipient) {
         this.id = UUID.randomUUID();
@@ -26,14 +24,12 @@ public class Notification {
         this.recipient = recipient;
     }
 
-
-
     public void markAsRead() {
         this.isRead = true;
     }
 
-
     public UUID getId() { return id; }
+    public void setId(UUID id) { this.id = id; }
 
     public String getTitle() { return title; }
     public void setTitle(String title) { this.title = title; }
@@ -42,10 +38,8 @@ public class Notification {
     public void setMessage(String message) { this.message = message; }
 
     public NotificationType getType() { return type; }
-    // pas de setType() : le type d'une notification ne change pas après création
 
     public boolean isRead() { return isRead; }
-
 
     public LocalDateTime getCreatedAt() { return createdAt; }
 
@@ -57,15 +51,3 @@ public class Notification {
                 ", isRead=" + isRead + ", recipient=" + recipient.getFullName() + "}";
     }
 }
-
-
-
-
-
-
-
-
-
-
-
-
