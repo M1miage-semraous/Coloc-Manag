@@ -10,7 +10,6 @@ import javafx.scene.control.ListView;
 
 import java.time.LocalDate;
 import java.util.List;
-import java.util.UUID;
 
 public class TaskController {
 
@@ -24,8 +23,7 @@ public class TaskController {
                                  String importanceVal, String selectedUserName,
                                  Label lblResult, ListView<String> taskList) {
         if (titre.isBlank()) {
-            lblResult.setStyle("-fx-text-fill: red; -fx-font-size: 12;");
-            lblResult.setText("✗ Le titre est obligatoire.");
+            setError(lblResult, "✗ Le titre est obligatoire.");
             return;
         }
         try {
@@ -41,91 +39,80 @@ public class TaskController {
                     ImportanceLevel.valueOf(importanceVal),
                     1, assignee, currentUser
             );
-            lblResult.setStyle("-fx-text-fill: #0D9488; -fx-font-size: 12;");
-            lblResult.setText("✓ Tâche créée avec succès.");
-            refreshTaskList(taskList);
+            setSuccess(lblResult, "✓ Tâche créée avec succès.");
+            if (taskList != null) refreshTaskList(taskList);
         } catch (NumberFormatException e) {
-            lblResult.setStyle("-fx-text-fill: red; -fx-font-size: 12;");
-            lblResult.setText("✗ Deadline invalide.");
+            setError(lblResult, "✗ Deadline invalide.");
         } catch (Exception e) {
-            lblResult.setStyle("-fx-text-fill: red; -fx-font-size: 12;");
-            lblResult.setText("✗ " + e.getMessage());
+            setError(lblResult, "✗ " + e.getMessage());
         }
     }
 
     public void handleStartTask(int index, ListView<String> taskList, Label lblAction) {
         Task t = getTaskAt(index);
-        if (t == null) { lblAction.setText("✗ Sélectionnez une tâche."); return; }
+        if (t == null) { setError(lblAction, "✗ Sélectionnez une tâche."); return; }
         MainApp.taskService.startTask(t.getId());
-        refreshTaskList(taskList);
-        lblAction.setStyle("-fx-text-fill: #0D9488; -fx-font-size: 12;");
-        lblAction.setText("✓ Tâche démarrée.");
+        if (taskList != null) refreshTaskList(taskList);
+        setSuccess(lblAction, "✓ Tâche démarrée.");
     }
 
     public void handleCompleteTask(int index, ListView<String> taskList, Label lblAction) {
         Task t = getTaskAt(index);
-        if (t == null) { lblAction.setText("✗ Sélectionnez une tâche."); return; }
+        if (t == null) { setError(lblAction, "✗ Sélectionnez une tâche."); return; }
         MainApp.taskService.markTaskCompleted(t.getId());
-        refreshTaskList(taskList);
-        lblAction.setStyle("-fx-text-fill: #0D9488; -fx-font-size: 12;");
-        lblAction.setText("✓ Tâche terminée.");
+        if (taskList != null) refreshTaskList(taskList);
+        setSuccess(lblAction, "✓ Tâche terminée.");
     }
 
     public void handleValidateTask(int index, ListView<String> taskList, Label lblAction) {
         if (currentUser.getRole() != Role.ADMIN) {
-            lblAction.setStyle("-fx-text-fill: red; -fx-font-size: 12;");
-            lblAction.setText("✗ Seul l'admin peut valider.");
+            setError(lblAction, "✗ Seul l'admin peut valider.");
             return;
         }
         Task t = getTaskAt(index);
-        if (t == null) { lblAction.setText("✗ Sélectionnez une tâche."); return; }
+        if (t == null) { setError(lblAction, "✗ Sélectionnez une tâche."); return; }
         MainApp.taskService.validateTask(t.getId(), currentUser, "Validation OK");
-        refreshTaskList(taskList);
-        lblAction.setStyle("-fx-text-fill: #0D9488; -fx-font-size: 12;");
-        lblAction.setText("✓ Tâche validée.");
+        if (taskList != null) refreshTaskList(taskList);
+        setSuccess(lblAction, "✓ Tâche validée.");
     }
 
     public void handleRejectTask(int index, String comment, ListView<String> taskList, Label lblAction) {
         if (currentUser.getRole() != Role.ADMIN) {
-            lblAction.setStyle("-fx-text-fill: red; -fx-font-size: 12;");
-            lblAction.setText("✗ Seul l'admin peut rejeter.");
+            setError(lblAction, "✗ Seul l'admin peut rejeter.");
             return;
         }
         Task t = getTaskAt(index);
-        if (t == null) { lblAction.setText("✗ Sélectionnez une tâche."); return; }
+        if (t == null) { setError(lblAction, "✗ Sélectionnez une tâche."); return; }
         String commentFinal = comment.isBlank() ? "À refaire" : comment;
         MainApp.taskService.rejectTask(t.getId(), currentUser, commentFinal);
-        refreshTaskList(taskList);
-        lblAction.setStyle("-fx-text-fill: red; -fx-font-size: 12;");
-        lblAction.setText("✓ Tâche rejetée.");
+        if (taskList != null) refreshTaskList(taskList);
+        setError(lblAction, "✓ Tâche rejetée.");
     }
 
     public void handleDeleteTask(int index, ListView<String> taskList, Label lblAction) {
         if (currentUser.getRole() != Role.ADMIN) {
-            lblAction.setStyle("-fx-text-fill: red; -fx-font-size: 12;");
-            lblAction.setText("✗ Seul l'admin peut supprimer.");
+            setError(lblAction, "✗ Seul l'admin peut supprimer.");
             return;
         }
         Task t = getTaskAt(index);
-        if (t == null) { lblAction.setText("✗ Sélectionnez une tâche."); return; }
+        if (t == null) { setError(lblAction, "✗ Sélectionnez une tâche."); return; }
         MainApp.taskService.deleteTask(t.getId());
-        refreshTaskList(taskList);
-        lblAction.setStyle("-fx-text-fill: #0D9488; -fx-font-size: 12;");
-        lblAction.setText("✓ Tâche supprimée.");
+        if (taskList != null) refreshTaskList(taskList);
+        setSuccess(lblAction, "✓ Tâche supprimée.");
     }
 
     public void refreshTaskList(ListView<String> listView) {
+        if (listView == null) return;
         listView.getItems().clear();
         List<Task> tasks = currentUser.getRole() == Role.ADMIN
                 ? MainApp.taskService.getAllTasks()
                 : MainApp.taskService.getTasksByAssignedUser(currentUser);
         for (Task t : tasks) {
             listView.getItems().add(
-                    "📌 " + t.getTitle()
+                    t.getTitle()
                             + "  |  " + t.getStatus()
-                            + "  |  Priorité: " + t.getCalculatedPriority()
-                            + "  |  Assignée à: " + (t.getAssignedUser() != null ? t.getAssignedUser().getFullName() : "-")
-                            + "  |  Deadline: " + t.getDeadline()
+                            + "  |  " + (t.getAssignedUser() != null ? t.getAssignedUser().getFullName() : "-")
+                            + "  |  " + t.getDeadline()
             );
         }
     }
@@ -139,6 +126,10 @@ public class TaskController {
         return tasks.get(index);
     }
 
+    public int getTotalTasks() {
+        return MainApp.taskService.getAllTasks().size();
+    }
+
     public List<String> getUserNames() {
         return MainApp.userService.getAllUsers().stream()
                 .map(User::getFullName)
@@ -147,5 +138,21 @@ public class TaskController {
 
     public User getCurrentUser() {
         return currentUser;
+    }
+
+    private void setSuccess(Label lbl, String msg) {
+        lbl.setStyle(
+                "-fx-text-fill: #065F46; -fx-background-color: #D1FAE5;" +
+                        "-fx-background-radius: 8; -fx-padding: 8 12; -fx-font-size: 12px; -fx-font-weight: bold;"
+        );
+        lbl.setText(msg);
+    }
+
+    private void setError(Label lbl, String msg) {
+        lbl.setStyle(
+                "-fx-text-fill: #991B1B; -fx-background-color: #FEE2E2;" +
+                        "-fx-background-radius: 8; -fx-padding: 8 12; -fx-font-size: 12px; -fx-font-weight: bold;"
+        );
+        lbl.setText(msg);
     }
 }

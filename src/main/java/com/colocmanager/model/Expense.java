@@ -7,7 +7,6 @@ import java.util.UUID;
 
 public class Expense {
 
-
     private UUID id;
     private String label;
     private Double amount;
@@ -15,7 +14,6 @@ public class Expense {
     private LocalDate expenseDate;
     private List<ExpenseShare> shares;
     private User paidBy;
-
 
     public Expense(String label, Double amount, String description, LocalDate expenseDate, User paidBy) {
         this.id = UUID.randomUUID();
@@ -27,22 +25,17 @@ public class Expense {
         this.shares = new ArrayList<>();
     }
 
-
     public void splitAmount(List<User> participants) {
         this.shares.clear();
-
         if (participants == null || participants.isEmpty()) return;
-
-        double share = this.amount / participants.size(); // calcul de la part égale pour chacun
-
-        // pour chaque participant on crée un ExpenseShare avec son montant dû
+        double share = this.amount / participants.size();
         for (User user : participants) {
             this.shares.add(new ExpenseShare(user, share));
         }
     }
 
-
     public UUID getId() { return id; }
+    public void setId(UUID id) { this.id = id; } // ← AJOUT
 
     public String getLabel() { return label; }
     public void setLabel(String label) { this.label = label; }
@@ -65,6 +58,6 @@ public class Expense {
     @Override
     public String toString() {
         return "Expense{id=" + id + ", label='" + label + "', amount=" + amount +
-                ", paidBy=" + paidBy.getFullName() + "}";
+                ", paidBy=" + (paidBy != null ? paidBy.getFullName() : "-") + "}";
     }
 }

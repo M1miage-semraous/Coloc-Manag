@@ -134,6 +134,8 @@ public class ExpenseRepository {
                 paidBy
         );
 
+        expense.setId(UUID.fromString(expenseId)); // ← ID chargé depuis la base
+
         List<ExpenseShare> shares = loadSharesForExpense(expenseId);
         expense.setShares(shares);
         return expense;
