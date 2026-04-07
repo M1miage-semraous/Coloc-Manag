@@ -4,6 +4,8 @@ import com.colocmanager.model.User;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
 
+import java.util.Objects;
+
 public class SceneManager {
 
     private static Stage primaryStage;
@@ -14,16 +16,12 @@ public class SceneManager {
     }
 
     public static void applyCSS(Scene scene) {
-        String css = SceneManager.class.getResource("/styles.css").toExternalForm();
+        String css = Objects.requireNonNull(SceneManager.class.getResource("/styles.css")).toExternalForm();
         scene.getStylesheets().add(css);
     }
 
     public static void showLogin() {
         new LoginView(primaryStage);
-    }
-
-    public static void showRegister() {
-        new RegisterView(primaryStage);
     }
 
     public static void showDashboard(User user) {
@@ -49,14 +47,6 @@ public class SceneManager {
 
     public static void showMonthlyReport(User user) {
         new MonthlyReportView(primaryStage, user);
-    }
-
-    public static Stage getStage() {
-        return primaryStage;
-    }
-
-    public static User getCurrentUser() {
-        return currentUser;
     }
 
     public static void setCurrentUser(User user) {

@@ -66,6 +66,7 @@ class ExpenseServiceTest {
         verify(expenseShareRepository, times(3)).save(any(), any());
     }
 
+
     @Test
     @DisplayName("Créer une dépense avec 1 seul participant")
     void testCreateExpense_SingleParticipant() {

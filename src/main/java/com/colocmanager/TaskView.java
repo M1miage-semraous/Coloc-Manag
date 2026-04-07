@@ -18,6 +18,7 @@ import javafx.scene.text.Text;
 import javafx.stage.Stage;
 
 import java.util.List;
+import java.util.Objects;
 
 public class TaskView {
 
@@ -62,7 +63,7 @@ public class TaskView {
 
         Scene scene = new Scene(root, 1200, 750);
         scene.getStylesheets().add(
-                getClass().getResource("/styles.css").toExternalForm()
+                Objects.requireNonNull(getClass().getResource("/styles.css")).toExternalForm()
         );
         stage.setTitle("ColocManager — Tâches");
         stage.setScene(scene);
@@ -233,13 +234,13 @@ public class TaskView {
         btnStart.setOnAction(e -> {
             controller.handleStartTask(selectedIndex, null, lblAction);
             refreshTaskList(user);
-            updateActionLabel(lblAction, true);
+            updateActionLabel(lblAction);
         });
 
         btnTerminer.setOnAction(e -> {
             controller.handleCompleteTask(selectedIndex, null, lblAction);
             refreshTaskList(user);
-            updateActionLabel(lblAction, true);
+            updateActionLabel(lblAction);
         });
 
         HBox row = new HBox(10, btnStart, btnTerminer);
@@ -256,17 +257,17 @@ public class TaskView {
             btnValider.setOnAction(e -> {
                 controller.handleValidateTask(selectedIndex, null, lblAction);
                 refreshTaskList(user);
-                updateActionLabel(lblAction, true);
+                updateActionLabel(lblAction);
             });
             btnRejeter.setOnAction(e -> {
                 controller.handleRejectTask(selectedIndex, tfComment.getText(), null, lblAction);
                 refreshTaskList(user);
-                updateActionLabel(lblAction, true);
+                updateActionLabel(lblAction);
             });
             btnSuppr.setOnAction(e -> {
                 controller.handleDeleteTask(selectedIndex, null, lblAction);
                 refreshTaskList(user);
-                updateActionLabel(lblAction, true);
+                updateActionLabel(lblAction);
             });
 
             row.getChildren().addAll(btnValider, btnRejeter, tfComment, btnSuppr);
@@ -276,7 +277,7 @@ public class TaskView {
         return row;
     }
 
-    private void updateActionLabel(Label lbl, boolean success) {
+    private void updateActionLabel(Label lbl) {
         if (lbl.getText().startsWith("✓")) {
             lbl.setStyle("-fx-text-fill: #065F46; -fx-background-color: #D1FAE5; -fx-background-radius: 8; -fx-padding: 8 12; -fx-font-size: 12px; -fx-font-weight: bold;");
         } else {
@@ -302,7 +303,8 @@ public class TaskView {
 
         for (int i = 0; i < tasks.size(); i++) {
             Task t = tasks.get(i);
-            final int idx = i;
+            final int idx;
+            idx = i;
             HBox row = buildTaskRow(t, idx);
             taskListBox.getChildren().add(row);
         }
