@@ -19,16 +19,16 @@ public class MainApp extends Application {
         DatabaseManager.getInstance();
         SceneManager.init(primaryStage);
 
-        UserRepository userRepo = new UserRepository();
-        TaskRepository taskRepo = new TaskRepository();
+        UserRepository userRepo       = new UserRepository();
+        TaskRepository taskRepo       = new TaskRepository();
         TaskValidationRepository valRepo = new TaskValidationRepository();
         ExpenseRepository expenseRepo = new ExpenseRepository();
         ExpenseShareRepository shareRepo = new ExpenseShareRepository();
         NotificationRepository notifRepo = new NotificationRepository();
 
-        userService = new UserService(userRepo);
-        taskService = new TaskService(taskRepo, valRepo, notifRepo, userRepo);
-        expenseService = new ExpenseService(expenseRepo, shareRepo);
+        userService        = new UserService(userRepo);
+        taskService        = new TaskService(taskRepo, valRepo, notifRepo, userRepo);
+        expenseService     = new ExpenseService(expenseRepo, shareRepo, notifRepo);
         notificationService = new NotificationService(notifRepo);
 
         if (userService.findByEmail("adnane@gmail.com").isEmpty()) {

@@ -16,11 +16,17 @@ import javafx.scene.text.FontWeight;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class NotificationView {
 
+    private final List<Notification> selectedNotifs = new ArrayList<>();
+    private VBox notifListBox;
+    private User currentUser;
+
     public NotificationView(Stage stage, User user) {
+        this.currentUser = user;
         NotificationController controller = new NotificationController(user);
         build(stage, user, controller);
     }
@@ -44,7 +50,10 @@ public class NotificationView {
 
         VBox rightCol = new VBox(16);
         HBox.setHgrow(rightCol, Priority.ALWAYS);
-        rightCol.getChildren().add(buildNotifListCard(controller));
+
+        notifListBox = new VBox(10);
+        VBox notifCard = buildNotifListCard(controller, user);
+        rightCol.getChildren().add(notifCard);
 
         content.getChildren().addAll(leftCol, rightCol);
 
@@ -85,7 +94,6 @@ public class NotificationView {
         btnRetour.setOnAction(e -> SceneManager.showDashboard(user));
 
         int unread = controller.getUnreadCount();
-
         StackPane badge = new StackPane();
         badge.setStyle(
                 "-fx-background-color: " + (unread > 0 ? "#EF4444" : "#10B981") + ";" +
@@ -121,11 +129,9 @@ public class NotificationView {
 
     private VBox buildStatsCard(NotificationController controller) {
         VBox card = buildCard("Statistiques");
-
         int total  = controller.getNotifications().size();
         int unread = controller.getUnreadCount();
         int read   = total - unread;
-
         card.getChildren().addAll(
                 statRow("Total",    String.valueOf(total),  "#6366F1"),
                 statRow("Non lues", String.valueOf(unread), "#EF4444"),
@@ -177,11 +183,43 @@ public class NotificationView {
             SceneManager.showNotifications(user);
         });
 
-        card.getChildren().add(btnMarkAll);
+        Button btnDeleteSelected = new Button("✗  Supprimer la sélection");
+        btnDeleteSelected.setMaxWidth(Double.MAX_VALUE);
+        btnDeleteSelected.setStyle(
+                "-fx-background-color: #FEE2E2; -fx-text-fill: #DC2626;" +
+                        "-fx-font-size: 13px; -fx-font-weight: bold;" +
+                        "-fx-background-radius: 10; -fx-cursor: hand; -fx-padding: 12 20;"
+        );
+        btnDeleteSelected.setOnAction(e -> {
+            if (selectedNotifs.isEmpty()) return;
+            for (Notification n : selectedNotifs) {
+                MainApp.notificationService.deleteNotification(n.getId());
+            }
+            selectedNotifs.clear();
+            SceneManager.showNotifications(user);
+        });
+
+        Button btnSelectAll = new Button("☐  Tout sélectionner");
+        btnSelectAll.setMaxWidth(Double.MAX_VALUE);
+        btnSelectAll.setStyle(
+                "-fx-background-color: #F3F4F6; -fx-text-fill: #374151;" +
+                        "-fx-font-size: 13px; -fx-font-weight: bold;" +
+                        "-fx-background-radius: 10; -fx-cursor: hand; -fx-padding: 12 20;"
+        );
+        btnSelectAll.setOnAction(e -> {
+            List<Notification> all = controller.getNotifications();
+            selectedNotifs.clear();
+            selectedNotifs.addAll(all);
+            // Rafraichir visuellement toutes les rows
+            refreshNotifRows(notifListBox, all, user);
+            btnSelectAll.setText("☑  Tout désélectionner");
+        });
+
+        card.getChildren().addAll(btnMarkAll, btnSelectAll, btnDeleteSelected);
         return card;
     }
 
-    private VBox buildNotifListCard(NotificationController controller) {
+    private VBox buildNotifListCard(NotificationController controller, User user) {
         VBox card = buildCard("Toutes les notifications");
 
         List<Notification> notifications = controller.getNotifications();
@@ -198,32 +236,35 @@ public class NotificationView {
                             "-fx-max-width: 80; -fx-max-height: 80;"
             );
             Label emptyLbl = new Label("!");
-            emptyLbl.setStyle(
-                    "-fx-font-size: 36px; -fx-text-fill: #D1D5DB; -fx-font-weight: bold;"
-            );
+            emptyLbl.setStyle("-fx-font-size: 36px; -fx-text-fill: #D1D5DB; -fx-font-weight: bold;");
             emptyIcon.getChildren().add(emptyLbl);
 
             Label emptyText = new Label("Aucune notification");
-            emptyText.setStyle(
-                    "-fx-text-fill: #9CA3AF; -fx-font-size: 15px; -fx-font-weight: bold;"
-            );
+            emptyText.setStyle("-fx-text-fill: #9CA3AF; -fx-font-size: 15px; -fx-font-weight: bold;");
 
             Label emptySub = new Label("Vous êtes complètement à jour !");
             emptySub.setStyle("-fx-text-fill: #D1D5DB; -fx-font-size: 13px;");
 
             empty.getChildren().addAll(emptyIcon, emptyText, emptySub);
-            card.getChildren().add(empty);
+            notifListBox.getChildren().add(empty);
         } else {
-            for (Notification n : notifications) {
-                card.getChildren().add(buildNotifRow(n));
-            }
+            refreshNotifRows(notifListBox, notifications, user);
         }
 
+        card.getChildren().add(notifListBox);
         return card;
     }
 
-    private VBox buildNotifRow(Notification n) {
-        boolean isRead = n.isRead();
+    private void refreshNotifRows(VBox box, List<Notification> notifications, User user) {
+        box.getChildren().clear();
+        for (Notification n : notifications) {
+            box.getChildren().add(buildNotifRow(n, user, notifications));
+        }
+    }
+
+    private VBox buildNotifRow(Notification n, User user, List<Notification> allNotifs) {
+        boolean isRead     = n.isRead();
+        boolean isSelected = selectedNotifs.contains(n);
 
         String typeIcon, typeColor, typeBg;
         switch (n.getType().name()) {
@@ -233,6 +274,11 @@ public class NotificationView {
             default               -> { typeIcon = "!"; typeColor = "#F59E0B"; typeBg = "#FEF3C7"; }
         }
 
+        // Checkbox de sélection
+        CheckBox checkBox = new CheckBox();
+        checkBox.setSelected(isSelected);
+        checkBox.setStyle("-fx-cursor: hand;");
+
         StackPane iconBox = new StackPane();
         iconBox.setStyle(
                 "-fx-background-color: " + typeBg + ";" +
@@ -241,9 +287,7 @@ public class NotificationView {
                         "-fx-max-width: 48; -fx-max-height: 48;"
         );
         Label iconLbl = new Label(typeIcon);
-        iconLbl.setStyle(
-                "-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: " + typeColor + ";"
-        );
+        iconLbl.setStyle("-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: " + typeColor + ";");
         iconBox.getChildren().add(iconLbl);
 
         Label msgLbl = new Label(n.getMessage());
@@ -264,25 +308,65 @@ public class NotificationView {
                         "-fx-font-size: 10px; -fx-font-weight: bold;"
         );
 
-        HBox rowContent = new HBox(14, iconBox, msgLbl, statusLbl);
-        rowContent.setAlignment(Pos.CENTER_LEFT);
-
-        VBox row = new VBox(rowContent);
+        VBox row = new VBox();
         row.setPadding(new Insets(14, 16, 14, 16));
-        row.setStyle(
-                "-fx-background-color: " + (isRead ? "#F9FAFB" : "#EEF2FF") + ";" +
-                        "-fx-background-radius: 12;" +
-                        "-fx-border-color: " + (isRead ? "#E5E7EB" : "#A5B4FC") + ";" +
-                        "-fx-border-radius: 12; -fx-border-width: 1;"
-        );
+
+        // Style selon sélection
+        String rowStyle = isSelected
+                ? "-fx-background-color: #EEF2FF; -fx-background-radius: 12;" +
+                "-fx-border-color: #6366F1; -fx-border-radius: 12; -fx-border-width: 2; -fx-cursor: hand;"
+                : "-fx-background-color: " + (isRead ? "#F9FAFB" : "#EEF2FF") + ";" +
+                "-fx-background-radius: 12; -fx-border-color: " + (isRead ? "#E5E7EB" : "#A5B4FC") + ";" +
+                "-fx-border-radius: 12; -fx-border-width: 1; -fx-cursor: hand;";
+        row.setStyle(rowStyle);
+
+        HBox rowContent = new HBox(12, checkBox, iconBox, msgLbl, statusLbl);
+        rowContent.setAlignment(Pos.CENTER_LEFT);
+        row.getChildren().add(rowContent);
+
+        // Clic sur la row = toggle sélection
+        row.setOnMouseClicked(e -> {
+            if (selectedNotifs.contains(n)) {
+                selectedNotifs.remove(n);
+                checkBox.setSelected(false);
+                row.setStyle(
+                        "-fx-background-color: " + (isRead ? "#F9FAFB" : "#EEF2FF") + ";" +
+                                "-fx-background-radius: 12; -fx-border-color: " + (isRead ? "#E5E7EB" : "#A5B4FC") + ";" +
+                                "-fx-border-radius: 12; -fx-border-width: 1; -fx-cursor: hand;"
+                );
+            } else {
+                selectedNotifs.add(n);
+                checkBox.setSelected(true);
+                row.setStyle(
+                        "-fx-background-color: #EEF2FF; -fx-background-radius: 12;" +
+                                "-fx-border-color: #6366F1; -fx-border-radius: 12; -fx-border-width: 2; -fx-cursor: hand;"
+                );
+            }
+        });
+
+        checkBox.setOnAction(e -> {
+            if (checkBox.isSelected()) {
+                if (!selectedNotifs.contains(n)) selectedNotifs.add(n);
+                row.setStyle(
+                        "-fx-background-color: #EEF2FF; -fx-background-radius: 12;" +
+                                "-fx-border-color: #6366F1; -fx-border-radius: 12; -fx-border-width: 2; -fx-cursor: hand;"
+                );
+            } else {
+                selectedNotifs.remove(n);
+                row.setStyle(
+                        "-fx-background-color: " + (isRead ? "#F9FAFB" : "#EEF2FF") + ";" +
+                                "-fx-background-radius: 12; -fx-border-color: " + (isRead ? "#E5E7EB" : "#A5B4FC") + ";" +
+                                "-fx-border-radius: 12; -fx-border-width: 1; -fx-cursor: hand;"
+                );
+            }
+        });
+
         return row;
     }
 
     private VBox buildCard(String title) {
         Label titleLbl = new Label(title);
-        titleLbl.setStyle(
-                "-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #111827;"
-        );
+        titleLbl.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #111827;");
         Separator sep = new Separator();
 
         VBox card = new VBox(12, titleLbl, sep);

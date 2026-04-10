@@ -18,18 +18,27 @@ public class AdminController {
                                  String password, String roleVal,
                                  Label lblResult, ListView<String> userList) {
         if (fullName.isBlank() || email.isBlank() || password.isBlank()) {
-            lblResult.setStyle("-fx-text-fill: red; -fx-font-size: 12;");
+            lblResult.setStyle(
+                    "-fx-text-fill: #991B1B; -fx-background-color: #FEE2E2;" +
+                            "-fx-background-radius: 8; -fx-padding: 8 12; -fx-font-size: 12px; -fx-font-weight: bold;"
+            );
             lblResult.setText("✗ Veuillez remplir tous les champs.");
             return;
         }
         try {
             Role role = Role.valueOf(roleVal);
             MainApp.userService.createUser(fullName, email, password, role);
-            lblResult.setStyle("-fx-text-fill: #0D9488; -fx-font-size: 12;");
+            lblResult.setStyle(
+                    "-fx-text-fill: #065F46; -fx-background-color: #D1FAE5;" +
+                            "-fx-background-radius: 8; -fx-padding: 8 12; -fx-font-size: 12px; -fx-font-weight: bold;"
+            );
             lblResult.setText("✓ Utilisateur créé : " + fullName);
-            refreshUserList(userList);
+            if (userList != null) refreshUserList(userList);
         } catch (IllegalArgumentException e) {
-            lblResult.setStyle("-fx-text-fill: red; -fx-font-size: 12;");
+            lblResult.setStyle(
+                    "-fx-text-fill: #991B1B; -fx-background-color: #FEE2E2;" +
+                            "-fx-background-radius: 8; -fx-padding: 8 12; -fx-font-size: 12px; -fx-font-weight: bold;"
+            );
             lblResult.setText("✗ Un compte avec cet email existe déjà.");
         }
     }
@@ -37,24 +46,21 @@ public class AdminController {
     public void handleDeleteUser(int index, ListView<String> userList, Label lblResult) {
         List<User> users = MainApp.userService.getAllUsers();
         if (index < 0 || index >= users.size()) {
-            lblResult.setStyle("-fx-text-fill: red; -fx-font-size: 12;");
             lblResult.setText("✗ Sélectionnez un utilisateur.");
             return;
         }
         User user = users.get(index);
         MainApp.userService.deleteUser(user.getId());
-        lblResult.setStyle("-fx-text-fill: #0D9488; -fx-font-size: 12;");
         lblResult.setText("✓ Utilisateur supprimé.");
-        refreshUserList(userList);
+        if (userList != null) refreshUserList(userList);
     }
 
     public void refreshUserList(ListView<String> listView) {
+        if (listView == null) return;
         listView.getItems().clear();
         for (User u : MainApp.userService.getAllUsers()) {
             listView.getItems().add(
-                    "👤 " + u.getFullName()
-                            + "  |  " + u.getEmail()
-                            + "  |  " + u.getRole()
+                    u.getFullName() + "  |  " + u.getEmail() + "  |  " + u.getRole()
             );
         }
     }

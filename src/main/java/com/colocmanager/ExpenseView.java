@@ -13,7 +13,6 @@ import javafx.scene.effect.GaussianBlur;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
-import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.scene.text.Text;
@@ -51,9 +50,11 @@ public class ExpenseView {
         HBox.setHgrow(rightCol, Priority.ALWAYS);
         rightCol.getChildren().add(buildExpenseListCard(user));
 
-        if (user.getRole() != Role.ADMIN) {
-            rightCol.getChildren().add(buildMySharesCard(user));
-        } else {
+        // Mes parts à payer — visible pour TOUT LE MONDE y compris l'admin
+        rightCol.getChildren().add(buildMySharesCard(user));
+
+        // Récapitulatif paiements — visible uniquement pour l'admin
+        if (user.getRole() == Role.ADMIN) {
             rightCol.getChildren().add(buildRecapCard());
         }
 
@@ -101,7 +102,7 @@ public class ExpenseView {
 
         double total = controller.getTotalExpenses();
         double myDue = controller.getMyDue();
-        int nbExp = MainApp.expenseService.getAllExpenses().size();
+        int nbExp    = MainApp.expenseService.getAllExpenses().size();
 
         Text subtitle = new Text(
                 String.format("Total colocation : %.2f €  •  Mon solde : %.2f €", total, myDue)
@@ -109,11 +110,10 @@ public class ExpenseView {
         subtitle.setFont(Font.font("Segoe UI", 14));
         subtitle.setFill(Color.web("#FFFFFF", 0.75));
 
-        // Mini stats
         HBox miniStats = new HBox(16,
-                miniStat("Total", String.format("%.2f €", total)),
+                miniStat("Total",     String.format("%.2f €", total)),
                 miniStat("Mon solde", String.format("%.2f €", myDue)),
-                miniStat("Dépenses", String.valueOf(nbExp))
+                miniStat("Dépenses",  String.valueOf(nbExp))
         );
 
         VBox headerContent = new VBox(8, btnRetour, title, subtitle, miniStats);
@@ -172,11 +172,16 @@ public class ExpenseView {
                         "-fx-effect: dropshadow(gaussian, rgba(16,185,129,0.3), 8, 0, 0, 3);"
         );
         btnAjouter.setOnAction(e -> {
-            controller.handleCreateExpense(tfLabel.getText().trim(), tfMontant.getText().trim(), lblResult, dummy);
+            controller.handleCreateExpense(
+                    tfLabel.getText().trim(),
+                    tfMontant.getText().trim(),
+                    lblResult, dummy
+            );
             if (lblResult.getText().startsWith("✓")) {
                 lblResult.setStyle(
                         "-fx-text-fill: #065F46; -fx-background-color: #D1FAE5;" +
-                                "-fx-background-radius: 8; -fx-padding: 8 12; -fx-font-size: 12px; -fx-font-weight: bold;"
+                                "-fx-background-radius: 8; -fx-padding: 8 12;" +
+                                "-fx-font-size: 12px; -fx-font-weight: bold;"
                 );
                 tfLabel.clear();
                 tfMontant.clear();
@@ -184,7 +189,8 @@ public class ExpenseView {
             } else {
                 lblResult.setStyle(
                         "-fx-text-fill: #991B1B; -fx-background-color: #FEE2E2;" +
-                                "-fx-background-radius: 8; -fx-padding: 8 12; -fx-font-size: 12px; -fx-font-weight: bold;"
+                                "-fx-background-radius: 8; -fx-padding: 8 12;" +
+                                "-fx-font-size: 12px; -fx-font-weight: bold;"
                 );
             }
         });
@@ -196,16 +202,17 @@ public class ExpenseView {
     private VBox buildSummaryCard(User user) {
         VBox card = buildCard("Résumé financier");
 
-        double total = controller.getTotalExpenses();
-        double myDue = controller.getMyDue();
-        int nbUsers = MainApp.userService.getAllUsers().size();
-        double avg = nbUsers > 0 ? total / nbUsers : 0;
+        double total   = controller.getTotalExpenses();
+        double myDue   = controller.getMyDue();
+        int nbUsers    = MainApp.userService.getAllUsers().size();
+        double avg     = nbUsers > 0 ? total / nbUsers : 0;
 
         card.getChildren().addAll(
-                financeRow("Total des dépenses",   String.format("%.2f €", total), "#6366F1"),
-                financeRow("Mon solde restant",     String.format("%.2f €", myDue), myDue > 0 ? "#EF4444" : "#10B981"),
-                financeRow("Nombre de colocataires", String.valueOf(nbUsers), "#8B5CF6"),
-                financeRow("Moyenne par personne",  String.format("%.2f €", avg), "#F59E0B")
+                financeRow("Total des dépenses",    String.format("%.2f €", total),  "#6366F1"),
+                financeRow("Mon solde restant",      String.format("%.2f €", myDue),
+                        myDue > 0 ? "#EF4444" : "#10B981"),
+                financeRow("Nombre de colocataires", String.valueOf(nbUsers),         "#8B5CF6"),
+                financeRow("Moyenne par personne",   String.format("%.2f €", avg),   "#F59E0B")
         );
         return card;
     }
@@ -251,7 +258,6 @@ public class ExpenseView {
     private VBox buildExpenseRow(Expense expense, User user) {
         String paidBy = expense.getPaidBy() != null ? expense.getPaidBy().getFullName() : "-";
 
-        // Header ligne
         Label labelLbl = new Label(expense.getLabel());
         labelLbl.setStyle(
                 "-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #111827;"
@@ -267,31 +273,33 @@ public class ExpenseView {
         HBox topRow = new HBox(12, labelLbl, amountLbl);
         topRow.setAlignment(Pos.CENTER_LEFT);
 
-        // Meta
         Label paidByLbl = new Label("Payé par  " + paidBy);
         paidByLbl.setStyle("-fx-font-size: 11px; -fx-text-fill: #6B7280;");
 
-        Label dateLbl = new Label(expense.getExpenseDate() != null ? expense.getExpenseDate().toString() : "");
+        Label dateLbl = new Label(
+                expense.getExpenseDate() != null ? expense.getExpenseDate().toString() : ""
+        );
         dateLbl.setStyle("-fx-font-size: 11px; -fx-text-fill: #9CA3AF;");
 
         HBox metaRow = new HBox(16, paidByLbl, dateLbl);
 
-        // Shares
         VBox sharesBox = new VBox(4);
         if (!expense.getShares().isEmpty()) {
             for (ExpenseShare share : expense.getShares()) {
-                String name = share.getUser() != null ? share.getUser().getFullName() : "-";
-                boolean paid = share.isPaid();
-                String status = paid ? "✓ Payé" : "En attente";
-                String color  = paid ? "#059669" : "#D97706";
-                String bg     = paid ? "#D1FAE5" : "#FEF3C7";
+                String name   = share.getUser() != null ? share.getUser().getFullName() : "-";
+                boolean paid  = share.isPaid();
+                String status = paid ? "✓ Payé"    : "En attente";
+                String color  = paid ? "#059669"    : "#D97706";
+                String bg     = paid ? "#D1FAE5"    : "#FEF3C7";
 
                 Label nameLbl = new Label("→  " + name);
                 nameLbl.setStyle("-fx-font-size: 11px; -fx-text-fill: #374151;");
                 HBox.setHgrow(nameLbl, Priority.ALWAYS);
 
                 Label amtLbl = new Label(String.format("%.2f €", share.getAmountDue()));
-                amtLbl.setStyle("-fx-font-size: 11px; -fx-font-weight: bold; -fx-text-fill: " + color + ";");
+                amtLbl.setStyle(
+                        "-fx-font-size: 11px; -fx-font-weight: bold; -fx-text-fill: " + color + ";"
+                );
 
                 Label statusLbl = new Label(status);
                 statusLbl.setStyle(
@@ -319,8 +327,8 @@ public class ExpenseView {
             Button btnSuppr = new Button("Supprimer");
             btnSuppr.setStyle(
                     "-fx-background-color: #FEE2E2; -fx-text-fill: #DC2626;" +
-                            "-fx-font-size: 11px; -fx-font-weight: bold; -fx-background-radius: 6;" +
-                            "-fx-cursor: hand; -fx-padding: 5 12;"
+                            "-fx-font-size: 11px; -fx-font-weight: bold;" +
+                            "-fx-background-radius: 6; -fx-cursor: hand; -fx-padding: 5 12;"
             );
             btnSuppr.setOnAction(e -> {
                 MainApp.expenseService.deleteExpense(expense.getId());
@@ -346,10 +354,10 @@ public class ExpenseView {
 
         VBox sharesBox = new VBox(10);
         for (ExpenseShare share : shares) {
-            boolean paid = share.isPaid();
-            String color = paid ? "#059669" : "#D97706";
-            String bg    = paid ? "#D1FAE5" : "#FEF3C7";
-            String status = paid ? "✓ Payé" : "En attente";
+            boolean paid  = share.isPaid();
+            String color  = paid ? "#059669" : "#D97706";
+            String bg     = paid ? "#D1FAE5" : "#FEF3C7";
+            String status = paid ? "✓ Payé"  : "En attente";
 
             Label amtLbl = new Label(String.format("%.2f €", share.getAmountDue()));
             amtLbl.setStyle(
@@ -369,7 +377,8 @@ public class ExpenseView {
             row.setPadding(new Insets(12, 16, 12, 16));
             row.setStyle(
                     "-fx-background-color: #F9FAFB; -fx-background-radius: 10;" +
-                            "-fx-border-color: " + color + "30; -fx-border-radius: 10; -fx-border-width: 1;"
+                            "-fx-border-color: " + color + "30;" +
+                            "-fx-border-radius: 10; -fx-border-width: 1;"
             );
 
             if (!paid) {
@@ -381,6 +390,16 @@ public class ExpenseView {
                 );
                 btnPayer.setOnAction(e -> {
                     MainApp.expenseService.markShareAsPaid(share.getId());
+                    // Notification de confirmation
+                    MainApp.notificationService.sendNotification(
+                            "Paiement confirmé",
+                            String.format(
+                                    "Vous avez payé votre part de %.2f €.",
+                                    share.getAmountDue()
+                            ),
+                            com.colocmanager.enums.NotificationType.TASK_VALIDATED,
+                            user
+                    );
                     SceneManager.showExpenses(user);
                 });
                 row.getChildren().add(btnPayer);
@@ -404,34 +423,42 @@ public class ExpenseView {
         }
 
         for (Expense expense : expenses) {
-            Label expLbl = new Label(expense.getLabel() + "  —  " +
-                    String.format("%.2f €", expense.getAmount()));
+            Label expLbl = new Label(
+                    expense.getLabel() + "  —  " +
+                            String.format("%.2f €", expense.getAmount())
+            );
             expLbl.setStyle(
-                    "-fx-font-size: 13px; -fx-font-weight: bold; -fx-text-fill: #374151;" +
-                            "-fx-padding: 4 0 4 0;"
+                    "-fx-font-size: 13px; -fx-font-weight: bold;" +
+                            "-fx-text-fill: #374151; -fx-padding: 4 0 4 0;"
             );
             card.getChildren().add(expLbl);
 
             for (ExpenseShare share : expense.getShares()) {
-                String name = share.getUser() != null ? share.getUser().getFullName() : "-";
-                boolean paid = share.isPaid();
-                String color = paid ? "#059669" : "#D97706";
-                String status = paid ? "✓ Payé" : "En attente";
+                String name   = share.getUser() != null ? share.getUser().getFullName() : "-";
+                boolean paid  = share.isPaid();
+                String color  = paid ? "#059669" : "#D97706";
+                String status = paid ? "✓ Payé"  : "En attente";
 
                 Label nameLbl = new Label("→  " + name);
                 nameLbl.setStyle("-fx-font-size: 12px; -fx-text-fill: #374151;");
                 HBox.setHgrow(nameLbl, Priority.ALWAYS);
 
                 Label amtLbl = new Label(String.format("%.2f €", share.getAmountDue()));
-                amtLbl.setStyle("-fx-font-size: 12px; -fx-font-weight: bold; -fx-text-fill: " + color + ";");
+                amtLbl.setStyle(
+                        "-fx-font-size: 12px; -fx-font-weight: bold; -fx-text-fill: " + color + ";"
+                );
 
                 Label statusLbl = new Label(status);
-                statusLbl.setStyle("-fx-font-size: 11px; -fx-text-fill: " + color + "; -fx-font-weight: bold;");
+                statusLbl.setStyle(
+                        "-fx-font-size: 11px; -fx-text-fill: " + color + "; -fx-font-weight: bold;"
+                );
 
                 HBox shareRow = new HBox(10, nameLbl, amtLbl, statusLbl);
                 shareRow.setAlignment(Pos.CENTER_LEFT);
                 shareRow.setPadding(new Insets(6, 12, 6, 12));
-                shareRow.setStyle("-fx-background-color: #F9FAFB; -fx-background-radius: 8;");
+                shareRow.setStyle(
+                        "-fx-background-color: #F9FAFB; -fx-background-radius: 8;"
+                );
                 card.getChildren().add(shareRow);
             }
             card.getChildren().add(new Separator());
