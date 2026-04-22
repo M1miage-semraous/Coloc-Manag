@@ -6,9 +6,11 @@ import com.colocmanager.model.ExpenseShare;
 import com.colocmanager.model.User;
 import com.colocmanager.repository.ExpenseRepository;
 import com.colocmanager.repository.ExpenseShareRepository;
+import com.colocmanager.repository.NotificationRepository;
 import com.colocmanager.service.ExpenseService;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
+
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -25,6 +27,7 @@ class ExpenseServiceTest {
 
     @Mock private ExpenseRepository expenseRepository;
     @Mock private ExpenseShareRepository expenseShareRepository;
+    @Mock private NotificationRepository notificationRepository;
 
     private ExpenseService expenseService;
     private User adnan;
@@ -33,7 +36,11 @@ class ExpenseServiceTest {
 
     @BeforeEach
     void setUp() {
-        expenseService = new ExpenseService(expenseRepository, expenseShareRepository);
+        expenseService = new ExpenseService(
+                expenseRepository,
+                expenseShareRepository,
+                notificationRepository
+        );
 
         adnan = new User("Adnan", "adnan@test.com", "pass", Role.ADMIN);
         adnan.setId(UUID.randomUUID());
@@ -65,7 +72,6 @@ class ExpenseServiceTest {
         verify(expenseRepository, times(1)).save(expense);
         verify(expenseShareRepository, times(3)).save(any(), any());
     }
-
 
     @Test
     @DisplayName("Créer une dépense avec 1 seul participant")

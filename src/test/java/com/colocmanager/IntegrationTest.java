@@ -50,7 +50,7 @@ class IntegrationTest {
 
         userService = new UserService(userRepo);
         taskService = new TaskService(taskRepo, valRepo, notifRepo, userRepo);
-        expenseService = new ExpenseService(expenseRepo, shareRepo);
+        expenseService = new ExpenseService(expenseRepo, shareRepo, notifRepo);
         notificationService = new NotificationService(notifRepo);
     }
 
@@ -160,17 +160,14 @@ class IntegrationTest {
     void testTaskWorkflow() {
         Task task = taskService.getAllTasks().get(0);
 
-        // Démarrer
         taskService.startTask(task.getId());
         Task updated = taskService.findById(task.getId()).get();
         assertEquals(TaskStatus.IN_PROGRESS, updated.getStatus());
 
-        // Terminer
         taskService.markTaskCompleted(task.getId());
         updated = taskService.findById(task.getId()).get();
         assertEquals(TaskStatus.PENDING_VALIDATION, updated.getStatus());
 
-        // Valider
         admin = userService.findByEmail("adnan@test.com").get();
         taskService.validateTask(task.getId(), admin, "Très bien");
         updated = taskService.findById(task.getId()).get();
