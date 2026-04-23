@@ -32,34 +32,34 @@ public class MonthlyReport {
 
 
     public void generate() {
-
-
         this.totalTasksAssigned = tasks.size();
-
 
         this.totalTasksValidated = (int) tasks.stream()
                 .filter(t -> t.getStatus() == TaskStatus.VALIDATED)
                 .count();
 
-
         this.totalTasksRejected = (int) tasks.stream()
                 .filter(t -> t.getStatus() == TaskStatus.REJECTED)
                 .count();
 
-
+        // Total déjà payé par l'utilisateur sur ses parts
         this.totalPaid = expenses.stream()
-                .filter(e -> e.getPaidBy().getId().equals(owner.getId()))
-                .mapToDouble(Expense::getAmount)
+                .flatMap(e -> e.getShares().stream())
+                .filter(s -> s.getUser() != null
+                        && s.getUser().getId().equals(owner.getId())
+                        && s.isPaid())
+                .mapToDouble(ExpenseShare::getAmountDue)
                 .sum();
 
-
+        // Total restant à payer par l'utilisateur
         this.totalDue = expenses.stream()
                 .flatMap(e -> e.getShares().stream())
-                .filter(s -> s.getUser().getId().equals(owner.getId()))
+                .filter(s -> s.getUser() != null
+                        && s.getUser().getId().equals(owner.getId())
+                        && !s.isPaid())
                 .mapToDouble(ExpenseShare::getAmountDue)
                 .sum();
     }
-
 
     public UUID getId() { return id; }
     public int getMonth() { return month; }
